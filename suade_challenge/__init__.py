@@ -5,67 +5,64 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from sqlalchemy import create_engine
 
 
-app = Flask(__name__)
-# Determine what database to use.
-
-
-@app.route('/')
-def information():
-    return render_template('index.html')
-
-
-@app.route('/reports/<int:report_id>/<string:report_type>', methods=['GET'])
-def reports(report_id, report_type):
-    """Controller for getting the report
-    The data for report_id  is retrieved from the database and a Report instance created.
-    The rendered document is created using the `render` method within a specialised Generator class.
-    """
+def create_app(test_config=None):
+    # create and configure the app
+    app = Flask(__name__, instance_relative_config=True)
     # When using separate test servers, use settings files or environment variables to hold these details.
-    # There is only one endpoint so putting create engine here is okay, but not good for bigger app.
-    if app.config['TESTING']:
+    if test_config['TESTING']:
         engine = create_engine('postgresql://postgres:password@localhost:5432/suade')
     else:
-        # postgres://interview:uo4uu3AeF3@candidate.suade.org:5432/suade
+        # postgres://interview:uo4uu3AeF3@candidate.suade.org:5432/suade  # @todo Can't connect for some reason
         engine = create_engine('postgresql://postgres:password@localhost:5432/suade')
-    # Load the report from the database.
-    conn = engine.connect()
-    # First report record. List of Tuples returned
-    lst_report_names = [rec[0] for rec in conn.execute("SELECT organization FROM reports WHERE id={}".format(report_id)) if rec is not None]
-    conn.close()
-    if not lst_report_names:
-        return render_template('404.html'), 404  # return a 404
-    # We have a list therefore report exists, now get items
-    conn = engine.connect()
-    # First report record
-    lst_items = []
-    gen_item_tuples = (rec for rec in conn.execute("SELECT name, price FROM items WHERE report_id={}".format(report_id)) if rec is not None)
-    conn.close()
-    for item_tuple in gen_item_tuples:
-        lst_items.append({'name': item_tuple[0], 'price': str(item_tuple[1])})
-    # lst_items = [{'name': 'name1', 'price': '200.00'}, {'name': 'name2', 'price': '200.00'}, {'name': 'name3', 'price': '200.00'}]
-    obj_report = Report(lst_report_names[0], datetime.now(), lst_items)
-    # Create the appropriate report and return to user.
-    try:
-        obj_generator = Generator().factory(report_type, obj_report)
-    except Exception as e:
-        # @todo Error logging here
-        if e.args[1] == 404:
-            return page_not_found(e)
-        else:
-            raise e
-    return obj_generator.render()
 
+    @app.route('/')
+    def information():
+        return render_template('index.html')
 
-@app.errorhandler(404)
-def page_not_found(e):
-    """Handle page not found"""
-    return render_template('404.html'), 404
+    @app.route('/reports/<int:report_id>/<string:report_type>', methods=['GET'])
+    def reports(report_id, report_type):
+        """Controller for getting the report
+        The data for report_id  is retrieved from the database and a Report instance created.
+        The rendered document is created using the `render` method within a specialised Generator class.
+        """
+        # Load the report from the database.
+        conn = engine.connect()
+        # First report record. List of Tuples returned
+        lst_report_names = [rec[0] for rec in conn.execute("SELECT organization FROM reports WHERE id={}".format(report_id)) if rec is not None]
+        conn.close()
+        if not lst_report_names:
+            return render_template('404.html'), 404  # return a 404
+        # We have a list therefore report exists, now get items
+        conn = engine.connect()
+        # First report record
+        lst_items = []
+        gen_item_tuples = (rec for rec in conn.execute("SELECT name, price FROM items WHERE report_id={}".format(report_id)) if rec is not None)
+        conn.close()
+        for item_tuple in gen_item_tuples:
+            lst_items.append({'name': item_tuple[0], 'price': str(item_tuple[1])})
+        obj_report = Report(lst_report_names[0], datetime.now(), lst_items)
+        # Create the appropriate report and return to user.
+        try:
+            obj_generator = Generator().factory(report_type, obj_report)
+        except Exception as e:
+            # @todo Error logging here
+            if e.args[1] == 404:
+                return page_not_found(e)
+            else:
+                raise e
+        return obj_generator.render()
 
+    @app.errorhandler(404)
+    def page_not_found(e):
+        """Handle page not found"""
+        return render_template('404.html'), 404
 
-@app.errorhandler(500)
-def internal_server_error(e):
-    """Handle server error"""
-    return render_template('500.html'), 500
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        """Handle server error"""
+        return render_template('500.html'), 500
+
+    return app
 
 
 class Report(object):
@@ -108,10 +105,12 @@ class Report(object):
 
 
 class Generator(object):
-
+    """
+    Class that handles the rendering of the reports.
+    """
     def factory(self, gen_type, report):
         """Factory that returns a specialised generator. For instance PDF generator that renders the report content
-        for PDF.
+        in PDF.
         :type: gen_type str
         :type: report Report
         """
@@ -222,7 +221,3 @@ class HTMLReport(Generator):
         }
         # Render the template and return
         return render_template('report.html', **report_detail)
-
-
-if __name__ == '__main__':
-    app.run()
