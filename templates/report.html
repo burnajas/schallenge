@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report Template</title>
+    <style>
+        body {
+            font-family: verdana, Times, serif;
+        }
+        h1 {
+            text-align: center;
+            font-size: 40px;
+        }
+        p {
+            font-size: 20px;
+        }
+        div.info {
+            text-indent: 60%;
+        }
+        div.inventory {
+            padding-top: 300px;
+        }
+        div.item {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>The Report</h1>
+{# Report information to render near top right of document #}
+<div class="info">Organization: {{ org_name }}</div>
+<div class="info">Reported: {{ report_date }}</div>
+<div class="info">Created: {{ render_timestamp }}</div>
+{# Invertory list near the center of the document #}
+<div class="inventory">
+{% for item in inventory %}
+    <div class="item">{{ item['name'] }}:&#160;{{ item['price'] }}</div>
+{% endfor %}
+</div>
+</body>
+</html>
