@@ -12,7 +12,7 @@ The service provides a RESTful API with the following endpoint:
 
 Therefore a request to return PDF version of report_id 1 would be:
 
-`/resports/1/pdf`
+`/reports/1/pdf`
 
 The test database runs locally and can be created using `docker-compose`.
 
