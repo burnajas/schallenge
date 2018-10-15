@@ -10,7 +10,7 @@ from suade_challenge import create_app
 def app():
     """Usually would initialise test database here, build tables from test schema then populate from preconfigured
      database fixtures (files holding SQL inserts).
-     But we know one exists from Docker initialisation.
+     But we know one exists from running docker-compose.
      """
     app = create_app({
         'TESTING': True,
