@@ -4,14 +4,28 @@ This service takes an abstract report and returns either a PDF document or an XM
 
 The service provides a RESTful API with the following endpoint:
 
-`/report/<int:report_id>/<string:type>`
+`/reports/<int:report_id>/<string:type>`
 
 `report_id` is the unique report id.
 
 `type` represents the report return type; PDF or XML
 
-The service is available as a Docker container. Assuming Docker is installed run the following command to activate the service:
+Therefore a request to return PDF version of report_id 1 would be:
 
-@todo
+`/resports/1/pdf`
 
- 
+The test database runs locally and can be created using `docker-compose`.
+
+Assuming docker-compose is installed run the following command to activate this test service:
+
+`docker-compose up -d`
+
+This report exporting service runs on Python3.6. The `requirements.txt` file contains project dependencies.
+
+To run the service (Windows):
+
+`set FLASK_APP=suade_challenge`
+
+`set FLASK_ENV=development`
+
+`flask run`
